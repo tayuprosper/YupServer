@@ -128,7 +128,7 @@ std::string HttpServer::getPath(std::string data)
     std::string path;
     if (pathLineStart != std::string::npos && pathLineEnd != std::string::npos)
     {
-        std::string line = data.substr(pathLineStart, pathLineEnd);
+        std::string line = data.substr(pathLineStart, pathLineEnd - pathLineStart);
         std::string actualPath = line.substr(0, line.find(" "));
         if (actualPath.length() == 0)
         {

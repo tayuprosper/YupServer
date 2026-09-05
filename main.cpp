@@ -35,7 +35,7 @@ int main()
         if (cl_con == -1)
         {
             std::cerr << "Failed to create socket" << strerror(errno) << std::endl;
-            return;
+            continue;
         }
 
         std::cout << "client Connected" << htons(cl_addr.sin_port) << std::endl;
@@ -60,7 +60,7 @@ int main()
             break;
 
         case HttpServer::GET:
-            responseBody = "Hello world";
+            responseBody = "Hello world\r\n";
             break;
 
         default:
@@ -69,7 +69,12 @@ int main()
             break;
         }
 
-        std::string response = "HTTP/1.1 " + statusCode + "\r\n" + "Content-Length: " + std::to_string(responseBody.length()) + "\r\n\r\n";
+        std::string response = "HTTP/1.1 " 
+                                + statusCode + "\r\n" 
+                                + "Content-Length: " 
+                                + std::to_string(responseBody.length()) 
+                                + "\r\n\r\n"
+                                + responseBody;
 
         send(cl_con, response.c_str(), response.length(), 0);
         app.closeConn(cl_con);
