@@ -123,7 +123,6 @@ void HttpServer::parseData(int fd, std::string &res, std::string &reqBody)
 
 std::string HttpServer::getPath(std::string data)
 {
-    // std::cout << "extracting path..." << std::endl;
     size_t pathLineStart = data.find("/");
     size_t pathLineEnd = data.find("\r\n");
     std::string path;
@@ -136,8 +135,6 @@ std::string HttpServer::getPath(std::string data)
             std::cerr << "Fatal Error: Malformed request header";
         }
         path = actualPath;
-        // std::cout << "extracted path:" << actualPath << std::endl;
-        // std::cout << "extracted path returned:" << path << std::endl;
         return path;
     }
 
@@ -152,4 +149,29 @@ bool HttpServer::_isFileRequest(std::string path){
 
 std::string HttpServer::_buildFilePath(std::string path){
    
+}
+
+HttpServer::METHODS HttpServer::stringToMethod(const std::string& methodStr){
+    if (methodStr == "GET") return GET;
+    if (methodStr == "POST") return POST;
+    if (methodStr == "PUT") return PUT;
+    if (methodStr == "PATCH") return PATCH;
+    if (methodStr == "DELETE") return DELETE;
+    if (methodStr == "HEAD") return HEAD;
+    if (methodStr == "OPTIONS") return OPTIONS;
+    
+    return UNKNOWN;
+}
+
+
+HttpServer::METHODS  HttpServer::getMethod(std::string data){
+    ssize_t methodEnd = data.find(" ");
+    if ( methodEnd != std::string::npos){
+        std::string methodStr = data.substr(0, methodEnd);
+        HttpServer::METHODS method = stringToMethod(methodStr);
+        return method;
+    }else{
+        std::cerr << "Malform methos in request" << std::endl;
+        return HttpServer::METHODS::UNKNOWN;
+    }
 }

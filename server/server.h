@@ -19,9 +19,7 @@ class HttpServer{
         std::string getPath(std::string data);
         bool _isFileRequest(std::string path);
         std::string _buildFilePath(std::string rawPath);
-    private:
-        sockaddr_in socketaddr;
-        sockaddr_in client_addr;
+        public:
         enum METHODS {
             GET,
             POST,
@@ -29,6 +27,13 @@ class HttpServer{
             PATCH,
             DELETE,
             HEAD,
-            OPTIONS
+            OPTIONS,
+            UNKNOWN // Added for unsupported methods
         };
+        METHODS getMethod(std::string data);
+    
+    METHODS stringToMethod(const std::string& methodStr);
+    private:
+        sockaddr_in socketaddr;
+        sockaddr_in client_addr;
 };
