@@ -3,9 +3,11 @@
 #include <stdexcept>
 #include <unistd.h>
 
-int main()
+int main(int argc,char* argv[])
 {
-    HttpServer app;
+
+    std::string servedDir = (argc > 0) ? argv[1] : "./public";
+    HttpServer app(servedDir);
     int fd = app.run();
 
     sockaddr_in cl_addr;

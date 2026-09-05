@@ -7,9 +7,17 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <unistd.h>
+#include <sstream>
 
-HttpServer::HttpServer()
+
+
+
+
+HttpServer::HttpServer(const std::string& servedDir)
 {
+
+    rootDir = servedDir;
+    canonicalRoot = std::filesystem::canonical(rootDir);
     memset(&socketaddr, 0, sizeof(socketaddr));
     memset(&client_addr, 0, sizeof(client_addr));
     socketaddr.sin_family = AF_INET;
@@ -98,7 +106,7 @@ void HttpServer::parseData(int fd, std::string &res, std::string &reqBody)
                 size_t bodyRecoveredSizeFromHeaderRead = headerEnd + 4;
                 size_t bodySizeAlreadyRead = res.size() - bodyRecoveredSizeFromHeaderRead;
 
-                if (bodySizeAlreadyRead >= contentLength)
+                if ((int)bodySizeAlreadyRead >= contentLength)
                 {
                     reqBody.append(res, bodyRecoveredSizeFromHeaderRead, contentLength);
                 }
@@ -147,8 +155,67 @@ bool HttpServer::_isFileRequest(std::string path){
     return path.find(".") != std::string::npos ? true : false;  
 }
 
-std::string HttpServer::_buildFilePath(std::string path){
+
+
+bool HttpServer::containsTraversal(const std::string& decodedPath){
+        std::stringstream ss(decodedPath);
+        std::string segment;
+
+        while(getline(ss,segment,'/')){
+            if (segment == ".."){
+                return true;
+            }
+        }
+    return false;
+
+}
+
+fs::path HttpServer::buildFullPath(const std::string& path){
+    std::string relative = path;
+    if(!relative.empty() && relative.front() == '/'){
+        relative.erase(0,1);
+    }
+    fs::path joined = rootDir / relative;  
+    return joined;
+}
+
+std::string HttpServer::sanitizeFilePath(std::string path){
+    std::string decodedPath = decodePath(path);
+    bool isTraversal = containsTraversal(decodedPath);
+    if (isTraversal){
+        std::cerr << "path traversal is prohibited" << std::endl;
+        return "";
+    }
+    fs::path joined = buildFullPath(decodedPath);
+
+    fs::path canonicalRequested = fs::weakly_canonical(joined);
+
+    fs::path rel = canonicalRequested.lexically_relative(canonicalRoot);
+    bool isInsideRoot = !rel.empty() && rel.native().substr(0, 2) != "..";
+
+    if (!isInsideRoot) {
+        return "";  // rejected: escaped outside root
+    }
+
+    return canonicalRequested.string();
+}
+
+std::string HttpServer::decodePath(const std::string& path){
+    std::string decoded;
+   for (size_t i = 0; i < path.length(); i++){
+        if (path[i] == '%' && i + 2 < path.length()){
+            std::string hex = path.substr(i+1, 2);
+            char decodedChar = static_cast<char>(std::stoi(hex, nullptr, 16));
+            decoded+=decodedChar;
+            i+=2;
+            continue;
+        }
+        decoded+=path[i];
+   }
+
    
+
+   return decoded;
 }
 
 HttpServer::METHODS HttpServer::stringToMethod(const std::string& methodStr){
@@ -166,7 +233,7 @@ HttpServer::METHODS HttpServer::stringToMethod(const std::string& methodStr){
 
 HttpServer::METHODS  HttpServer::getMethod(std::string data){
     ssize_t methodEnd = data.find(" ");
-    if ( methodEnd != std::string::npos){
+    if ( (int)methodEnd != (int)std::string::npos){
         std::string methodStr = data.substr(0, methodEnd);
         HttpServer::METHODS method = stringToMethod(methodStr);
         return method;
@@ -175,3 +242,4 @@ HttpServer::METHODS  HttpServer::getMethod(std::string data){
         return HttpServer::METHODS::UNKNOWN;
     }
 }
+
