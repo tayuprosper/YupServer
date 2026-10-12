@@ -19,7 +19,7 @@ class HttpServer{
     public:
         int PORT = 8080;
         int socket_fd;
-        int max_conn = 10;
+        int max_conn = 1024;
         fs::path rootDir;
         fs::path canonicalRoot;
         int run();

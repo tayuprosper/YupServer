@@ -52,17 +52,19 @@ int main(int argc,char* argv[])
         {
         case HttpServer::POST:
             std::cout << "Handling POST payload: " << body << std::endl;
-            responseBody = "Resource Created successfully";
+            responseBody = "hello";
             statusCode = "201 Created";
             break;
 
         case HttpServer::PUT:
             std::cout << "Handling PUT payload: " << body << std::endl;
-            responseBody = "Resource Updated successfully";
+            responseBody = "hello";
+            statusCode = "200 OK";
             break;
 
         case HttpServer::GET:
-            responseBody = "Hello world\r\n";
+            responseBody = "hello";
+            statusCode = "200 OK";
             break;
 
         default:
@@ -73,8 +75,9 @@ int main(int argc,char* argv[])
 
         std::string response = "HTTP/1.1 " 
                                 + statusCode + "\r\n" 
-                                + "Content-Length: " 
-                                + std::to_string(responseBody.length()) 
+                                + "Content-Type: text/plain\r\n"
+                                + "Content-Length: " + std::to_string(responseBody.length()) + "\r\n"
+                                + "Connection: close"
                                 + "\r\n\r\n"
                                 + responseBody;
 

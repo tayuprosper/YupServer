@@ -12,7 +12,6 @@
 
 
 
-
 HttpServer::HttpServer(const std::string& servedDir)
 {
 
